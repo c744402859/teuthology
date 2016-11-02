@@ -421,77 +421,6 @@ ceph_deploy_upgrade.__doc__ = docstring_for_upgrade.format(
 
 
 @contextlib.contextmanager
-def ship_utilities(ctx, config):
-    """
-    Write a copy of valgrind.supp to each of the remote sites.  Set executables
-    used by Ceph in /usr/local/bin.  When finished (upon exit of the teuthology
-    run), remove these files.
-
-    :param ctx: Context
-    :param config: Configuration
-    """
-    assert config is None
-    testdir = teuthology.get_testdir(ctx)
-    filenames = []
-
-    log.info('Shipping valgrind.supp...')
-    with file(
-        os.path.join(os.path.dirname(__file__), 'valgrind.supp'),
-        'rb'
-            ) as f:
-        fn = os.path.join(testdir, 'valgrind.supp')
-        filenames.append(fn)
-        for rem in ctx.cluster.remotes.iterkeys():
-            teuthology.sudo_write_file(
-                remote=rem,
-                path=fn,
-                data=f,
-                )
-            f.seek(0)
-
-    FILES = ['daemon-helper', 'adjust-ulimits']
-    destdir = '/usr/bin'
-    for filename in FILES:
-        log.info('Shipping %r...', filename)
-        src = os.path.join(os.path.dirname(__file__), filename)
-        dst = os.path.join(destdir, filename)
-        filenames.append(dst)
-        with file(src, 'rb') as f:
-            for rem in ctx.cluster.remotes.iterkeys():
-                teuthology.sudo_write_file(
-                    remote=rem,
-                    path=dst,
-                    data=f,
-                )
-                f.seek(0)
-                rem.run(
-                    args=[
-                        'sudo',
-                        'chmod',
-                        'a=rx',
-                        '--',
-                        dst,
-                    ],
-                )
-
-    try:
-        yield
-    finally:
-        log.info('Removing shipped files: %s...', ' '.join(filenames))
-        run.wait(
-            ctx.cluster.run(
-                args=[
-                    'sudo',
-                    'rm',
-                    '-f',
-                    '--',
-                ] + list(filenames),
-                wait=False,
-            ),
-        )
-
-
-@contextlib.contextmanager
 def task(ctx, config):
     """
     Install packages for a given project.
@@ -616,7 +545,7 @@ def task(ctx, config):
 
     ctx.summary['flavor'] = flavor
     nested_tasks = [lambda: redhat.install(ctx=ctx, config=config),
-                    lambda: ship_utilities(ctx=ctx, config=None)]
+                    lambda: util.ship_utilities(ctx=ctx, config=None)]
 
     if config.get('rhbuild'):
         if config.get('playbook'):
@@ -643,6 +572,6 @@ def task(ctx, config):
                 project=project,
                 packages=config.get('packages', dict()),
             )),
-            lambda: ship_utilities(ctx=ctx, config=None),
+            lambda: util.ship_utilities(ctx=ctx, config=None),
         ):
             yield
