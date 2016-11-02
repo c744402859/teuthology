@@ -110,25 +110,10 @@ def _update_package_list_and_install(ctx, remote, rpm, config):
     log.info('Package version is %s', builder.version)
     log.info("Installing packages: {pkglist} on remote rpm {arch}".format(
         pkglist=", ".join(rpm), arch=builder.arch))
+    builder.install_repo()
+
     dist_release = builder.dist_release
     project = builder.project
-    start_of_url = builder.base_url
-    if dist_release == 'opensuse':
-        proj_release = '{proj}-release-{release}.noarch'.format(
-            proj=project, release=RELEASE)
-    else:
-        proj_release = '{proj}-release-{release}.{dist_release}.noarch'.format(
-            proj=project, release=RELEASE, dist_release=dist_release)
-    rpm_name = "{rpm_nm}.rpm".format(rpm_nm=proj_release)
-    base_url = "{start_of_url}/noarch/{rpm_name}".format(
-        start_of_url=start_of_url, rpm_name=rpm_name)
-    if dist_release == 'opensuse':
-        remote.run(args=[
-            'sudo', 'zypper', '-n', 'install', '--capability', rpm_name
-        ])
-    else:
-        remote.run(args=['sudo', 'yum', '-y', 'install', base_url])
-
     if dist_release != 'opensuse':
         uri = builder.uri_reference
         _yum_fix_repo_priority(remote, project, uri)

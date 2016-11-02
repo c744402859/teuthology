@@ -12,7 +12,8 @@ from . import repo_utils
 
 from .config import config
 from .contextutil import safe_while
-from .exceptions import VersionNotFoundError, CommitNotFoundError
+from .exceptions import (VersionNotFoundError, CommitNotFoundError,
+                         NoRemoteError)
 from .orchestra.opsys import OS, DEFAULT_OS_VERSION
 
 log = logging.getLogger(__name__)
@@ -758,6 +759,33 @@ class GitbuilderProject(object):
             log.info("Found sha1: {0}".format(sha1))
 
         return sha1
+
+    def install_repo(self):
+        """
+        Install the .repo file or sources.list fragment on self.remote if there
+        is one. If not, raises an exception
+        """
+        if not self.remote:
+            raise NoRemoteError()
+        dist_release = self.dist_release
+        project = self.project
+        if dist_release == 'opensuse':
+            proj_release = '{proj}-release-{release}.noarch'.format(
+                proj=project, release=RELEASE)
+        else:
+            proj_release = \
+                '{proj}-release-{release}.{dist_release}.noarch'.format(
+                    proj=project, release=RELEASE, dist_release=dist_release
+                )
+        rpm_name = "{rpm_nm}.rpm".format(rpm_nm=proj_release)
+        url = "{base_url}/noarch/{rpm_name}".format(
+            base_url=self.base_url, rpm_name=rpm_name)
+        if dist_release == 'opensuse':
+            self.remote.run(args=[
+                'sudo', 'zypper', '-n', 'install', '--capability', rpm_name
+            ])
+        else:
+            self.remote.run(args=['sudo', 'yum', '-y', 'install', url])
 
 
 class ShamanProject(GitbuilderProject):
