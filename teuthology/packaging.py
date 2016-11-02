@@ -437,6 +437,8 @@ class GitbuilderProject(object):
     """
     Represents a project that is built by gitbuilder.
     """
+    # gitbuilder always uses this value
+    rpm_release = "1-0"
 
     def __init__(self, project, job_config, ctx=None, remote=None):
         self.project = project

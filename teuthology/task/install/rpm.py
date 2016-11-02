@@ -8,9 +8,6 @@ from .util import _get_builder_project, _get_local_dir
 
 log = logging.getLogger(__name__)
 
-# Should the RELEASE value get extracted from somewhere?
-RELEASE = "1-0"
-
 
 def _remove(ctx, config, remote, rpm):
     """
@@ -57,10 +54,10 @@ def _remove(ctx, config, remote, rpm):
         ])
     if dist_release == 'opensuse':
         projRelease = '%s-release-%s.noarch' % (
-            config.get('project', 'ceph'), RELEASE)
+            config.get('project', 'ceph'), builder.rpm_release)
     else:
         projRelease = '%s-release-%s.%s.noarch' % (
-            config.get('project', 'ceph'), RELEASE, dist_release)
+            config.get('project', 'ceph'), builder.rpm_release, dist_release)
     if dist_release == 'opensuse':
         remote.run(args=['sudo', 'zypper', '-n', 'remove', projRelease])
     else:
@@ -313,14 +310,14 @@ def _upgrade_packages(ctx, config, remote, pkgs):
             "{base}/noarch/{proj}-release-{release}.noarch.rpm".format(
                 base=base_url,
                 proj=project,
-                release=RELEASE
+                release=builder.rpm_release
             )
     else:
         release_rpm = \
             "{base}/noarch/{proj}-release-{release}.{dist_release}.noarch.rpm".format(
                 base=base_url,
                 proj=project,
-                release=RELEASE,
+                release=builder.rpm_release,
                 dist_release=builder.dist_release,
             )
 
