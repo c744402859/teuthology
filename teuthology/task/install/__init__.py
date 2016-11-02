@@ -11,12 +11,13 @@ from teuthology.parallel import parallel
 from teuthology.orchestra import run
 from teuthology.task import ansible
 
-from . import util, rpm, deb, redhat
+from .util import (
+    _get_builder_project, get_flavor, ship_utilities,
+)
+
+from . import rpm, deb, redhat
 
 log = logging.getLogger(__name__)
-
-# Should the RELEASE value get extracted from somewhere?
-RELEASE = "1-0"
 
 
 def verify_package_version(ctx, config, remote):
@@ -35,7 +36,7 @@ def verify_package_version(ctx, config, remote):
     if config.get("extras"):
         log.info("Skipping version verification...")
         return True
-    builder = util._get_builder_project(ctx, remote, config)
+    builder = _get_builder_project(ctx, remote, config)
     version = builder.version
     pkg_to_check = builder.project
     installed_ver = packaging.get_package_version(remote, pkg_to_check)
@@ -540,7 +541,7 @@ def task(ctx, config):
         rhbuild = config.get('rhbuild')
         log.info("Build is %s " % rhbuild)
 
-    flavor = util.get_flavor(config)
+    flavor = get_flavor(config)
     log.info("Using flavor: %s", flavor)
 
     ctx.summary['flavor'] = flavor

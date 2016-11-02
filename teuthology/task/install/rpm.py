@@ -4,9 +4,12 @@ from teuthology.config import config as teuth_config
 from teuthology.orchestra import run
 from teuthology import packaging
 
-from . import util, RELEASE
+from .util import _get_builder_project, _get_local_dir
 
 log = logging.getLogger(__name__)
+
+# Should the RELEASE value get extracted from somewhere?
+RELEASE = "1-0"
 
 
 def _remove(ctx, config, remote, rpm):
@@ -21,7 +24,7 @@ def _remove(ctx, config, remote, rpm):
     rpm = _package_overrides(rpm, remote.os)
     log.info("Removing packages: {pkglist} on rpm system.".format(
         pkglist=", ".join(rpm)))
-    builder = util._get_builder_project(ctx, remote, config)
+    builder = _get_builder_project(ctx, remote, config)
     dist_release = builder.dist_release
 
     if dist_release == 'opensuse':
@@ -102,7 +105,7 @@ def _update_package_list_and_install(ctx, remote, rpm, config):
     :param config: the config dict
     """
     rpm = rpm._rpm_package_overrides(rpm, remote.os)
-    builder = util._get_builder_project(ctx, remote, config)
+    builder = _get_builder_project(ctx, remote, config)
     log.info('Pulling from %s', builder.base_url)
     log.info('Package version is %s', builder.version)
     log.info("Installing packages: {pkglist} on remote rpm {arch}".format(
@@ -143,7 +146,7 @@ def _update_package_list_and_install(ctx, remote, rpm, config):
                 'sudo', 'yum', 'clean', 'all',
             ])
 
-    ldir = util._get_local_dir(config, remote)
+    ldir = _get_local_dir(config, remote)
 
     if dist_release == 'opensuse':
         pkg_mng_cmd = 'zypper'
@@ -302,7 +305,7 @@ def _upgrade_packages(ctx, config, remote, pkgs):
     :param pkgs: the RPM packages to be installed
     :param branch: the branch of the project to be used
     """
-    builder = util._get_builder_project(ctx, remote, config)
+    builder = _get_builder_project(ctx, remote, config)
     log.info(
         "Host {host} is: {distro} {ver} {arch}".format(
             host=remote.shortname,

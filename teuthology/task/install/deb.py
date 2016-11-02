@@ -5,7 +5,7 @@ from cStringIO import StringIO
 
 from teuthology.orchestra import run
 
-from . import util
+from .util import _get_builder_project, _get_local_dir
 
 
 log = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def _update_package_list_and_install(ctx, remote, debs, config):
             stdout=StringIO(),
         )
 
-    builder = util._get_builder_project(ctx, remote, config)
+    builder = _get_builder_project(ctx, remote, config)
     log.info("Installing packages: {pkglist} on remote deb {arch}".format(
         pkglist=", ".join(debs), arch=builder.arch)
     )
@@ -73,7 +73,7 @@ def _update_package_list_and_install(ctx, remote, debs, config):
             'install',
         ] + ['%s=%s' % (d, version) for d in debs],
     )
-    ldir = util._get_local_dir(config, remote)
+    ldir = _get_local_dir(config, remote)
     if ldir:
         for fyle in os.listdir(ldir):
             fname = "%s/%s" % (ldir, fyle)
@@ -188,7 +188,7 @@ def _upgrade_packages(ctx, config, remote, debs):
             stdout=StringIO(),
         )
 
-    builder = util._get_builder_project(ctx, remote, config)
+    builder = _get_builder_project(ctx, remote, config)
     base_url = builder.base_url
     log.info('Pulling from %s', base_url)
 
