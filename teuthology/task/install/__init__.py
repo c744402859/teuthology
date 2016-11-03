@@ -538,7 +538,7 @@ def task(ctx, config):
 
     ctx.summary['flavor'] = flavor
     nested_tasks = [lambda: redhat.install(ctx=ctx, config=config),
-                    lambda: util.ship_utilities(ctx=ctx, config=None)]
+                    lambda: ship_utilities(ctx=ctx, config=None)]
 
     if config.get('rhbuild'):
         if config.get('playbook'):
@@ -565,6 +565,6 @@ def task(ctx, config):
                 project=project,
                 packages=config.get('packages', dict()),
             )),
-            lambda: util.ship_utilities(ctx=ctx, config=None),
+            lambda: ship_utilities(ctx=ctx, config=None),
         ):
             yield
