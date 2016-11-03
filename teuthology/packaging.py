@@ -399,7 +399,7 @@ def _get_config_value_for_remote(ctx, remote, config, key):
     :param config: the config dict
     :param key: the name of the value to retrieve
     """
-    roles = ctx.cluster.remotes[remote]
+    roles = ctx.cluster.remotes[remote] if ctx else None
     if 'all' in config:
         return config['all'].get(key)
     elif roles:
@@ -769,25 +769,47 @@ class GitbuilderProject(object):
         """
         if not self.remote:
             raise NoRemoteError()
+        return self._install_repo()
+
+    def _install_repo(self):
         dist_release = self.dist_release
         project = self.project
-        if dist_release == 'opensuse':
-            proj_release = '{proj}-release-{release}.noarch'.format(
-                proj=project, release=RELEASE)
-        else:
-            proj_release = \
-                '{proj}-release-{release}.{dist_release}.noarch'.format(
-                    proj=project, release=RELEASE, dist_release=dist_release
-                )
-        rpm_name = "{rpm_nm}.rpm".format(rpm_nm=proj_release)
-        url = "{base_url}/noarch/{rpm_name}".format(
-            base_url=self.base_url, rpm_name=rpm_name)
-        if dist_release == 'opensuse':
-            self.remote.run(args=[
-                'sudo', 'zypper', '-n', 'install', '--capability', rpm_name
-            ])
-        else:
-            self.remote.run(args=['sudo', 'yum', '-y', 'install', url])
+        if self.remote.os.package_type == 'rpm':
+            if dist_release == 'opensuse':
+                proj_release = '{proj}-release-{release}.noarch'.format(
+                    proj=project, release=self.rpm_release)
+            else:
+                proj_release = \
+                    '{proj}-release-{release}.{dist_release}.noarch'.format(
+                        proj=project, release=self.rpm_release,
+                        dist_release=dist_release
+                    )
+            rpm_name = "{rpm_nm}.rpm".format(rpm_nm=proj_release)
+            url = "{base_url}/noarch/{rpm_name}".format(
+                base_url=self.base_url, rpm_name=rpm_name)
+            if dist_release == 'opensuse':
+                self.remote.run(args=[
+                    'sudo', 'zypper', '-n', 'install', '--capability', rpm_name
+                ])
+            else:
+                self.remote.run(args=['sudo', 'yum', '-y', 'install', url])
+        elif self.remote.os.package_type == 'deb':
+            assert False
+
+    def remove_repo(self):
+        """
+        Remove the .repo file or sources.list fragment on self.remote if there
+        is one. If not, raises an exception
+        """
+        if not self.remote:
+            raise NoRemoteError()
+        return self._remove_repo()
+
+    def _remove_repo(self):
+        if self.remote.os.package_type == 'rpm':
+            remove_package('%s-release' % self.project, self.remote)
+        elif self.remote.os.package_type == 'deb':
+            assert False
 
 
 class ShamanProject(GitbuilderProject):
