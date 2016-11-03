@@ -819,7 +819,14 @@ class GitbuilderProject(object):
         if self.remote.os.package_type == 'rpm':
             remove_package('%s-release' % self.project, self.remote)
         elif self.remote.os.package_type == 'deb':
-            assert False
+            self.remote.run(
+                args=[
+                    'sudo',
+                    'rm', '-f',
+                    '/etc/apt/sources.list.d/{proj}.list'.format(
+                        proj=self.project),
+                ]
+            )
 
 
 class ShamanProject(GitbuilderProject):
