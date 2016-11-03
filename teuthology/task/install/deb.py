@@ -54,15 +54,8 @@ def _update_package_list_and_install(ctx, remote, debs, config):
     version = builder.version
     log.info('Package version is %s', version)
 
-    remote.run(
-        args=[
-            'echo', 'deb', builder.base_url, builder.codename, 'main',
-            run.Raw('|'),
-            'sudo', 'tee', '/etc/apt/sources.list.d/{proj}.list'.format(
-                proj=config.get('project', 'ceph')),
-        ],
-        stdout=StringIO(),
-    )
+    builder.install_repo()
+
     remote.run(args=['sudo', 'apt-get', 'update'], check_status=False)
     remote.run(
         args=[
@@ -195,15 +188,8 @@ def _upgrade_packages(ctx, config, remote, debs):
     version = builder.version
     log.info('Package version is %s', version)
 
-    remote.run(
-        args=[
-            'echo', 'deb', base_url, builder.codename, 'main',
-            run.Raw('|'),
-            'sudo', 'tee', '/etc/apt/sources.list.d/{proj}.list'.format(
-                proj=config.get('project', 'ceph')),
-        ],
-        stdout=StringIO(),
-    )
+    builder.install_repo()
+
     remote.run(args=['sudo', 'apt-get', 'update'], check_status=False)
     remote.run(
         args=[

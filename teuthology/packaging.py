@@ -15,6 +15,7 @@ from .contextutil import safe_while
 from .exceptions import (VersionNotFoundError, CommitNotFoundError,
                          NoRemoteError)
 from .orchestra.opsys import OS, DEFAULT_OS_VERSION
+from .orchestra.run import Raw
 
 log = logging.getLogger(__name__)
 
@@ -794,7 +795,16 @@ class GitbuilderProject(object):
             else:
                 self.remote.run(args=['sudo', 'yum', '-y', 'install', url])
         elif self.remote.os.package_type == 'deb':
-            assert False
+            self.remote.run(
+                args=[
+                    'echo', 'deb', self.base_url, self.codename, 'main',
+                    Raw('|'),
+                    'sudo', 'tee',
+                    '/etc/apt/sources.list.d/{proj}.list'.format(
+                        proj=self.project),
+                ],
+                stdout=StringIO(),
+            )
 
     def remove_repo(self):
         """
