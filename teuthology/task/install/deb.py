@@ -133,6 +133,12 @@ def _remove_deb(ctx, config, remote, debs):
 def _remove_sources_list(ctx, config, remote):
     builder = _get_builder_project(ctx, remote, config)
     builder.remove_repo()
+    remote.run(
+        args=[
+            'sudo', 'apt-get', 'update',
+        ],
+        check_status=False,
+    )
 
 
 def _upgrade_packages(ctx, config, remote, debs):
